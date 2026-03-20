@@ -20,6 +20,19 @@ defmodule EventExplorerWeb.Router do
     get "/", PageController, :home
   end
 
+  scope "/api", EventExplorerWeb.Api do
+    pipe_through :api
+
+    get "/events", EventController, :index
+    get "/events/:id", EventController, :show
+    post "/events", EventController, :create
+    put "/events/:id",EventController, :update
+    delete "/events/:id",EventController, :delete
+
+    get "/cities" ,CityController, :index
+    get "/categories", CategoryController, :index
+  end
+
   # Other scopes may use custom stacks.
   # scope "/api", EventExplorerWeb do
   #   pipe_through :api
