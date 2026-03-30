@@ -118,6 +118,30 @@ defmodule EventExplorer.Events do
     Event.changeset(event, attrs)
   end
 
+  def related_events(event) do
+  event = Repo.preload(event, [:categories, venue: :city])
+
+  category_ids = Enum.map(event.categories, & &1.id)
+
+  from(e in Event,
+    join: v in assoc(e, :venue),
+    join: c in assoc(v, :city),
+    join: cat in assoc(e, :categories),
+    where:
+     ( c.id == ^event.venue.city_id or
+      cat.id in ^category_ids )and
+      e.id != ^event.id,
+    distinct: e.id,
+    limit: 5
+  )
+  |> Repo.all()
+  |> Repo.preload([:categories, venue: :city])
+end
+
+
+
+
+
   def list_categories do
     Repo.all(Category)
   end
