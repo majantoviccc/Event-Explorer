@@ -27,8 +27,8 @@ defmodule EventExplorerWeb.EventLive.Index do
   def page_header(assigns) do
     ~H"""
     <div class="header">
-      <h1><%= render_slot(@inner_block) %></h1>
-      <p><%= render_slot(@subtitle) %></p>
+      <h1>{render_slot(@inner_block)}</h1>
+      <p>{render_slot(@subtitle)}</p>
     </div>
     """
   end
@@ -36,7 +36,6 @@ defmodule EventExplorerWeb.EventLive.Index do
   def render(assigns) do
     ~H"""
     <div class="page">
-
       <.page_header>
         Event Explorer ✨
         <:subtitle>
@@ -44,87 +43,71 @@ defmodule EventExplorerWeb.EventLive.Index do
         </:subtitle>
       </.page_header>
 
- 
       <div class="main-container">
-
         <div class="action">
-          <button>Add Event +</button>
+          <.link navigate="/events/new">
+            <button>Add Event +</button>
+          </.link>
         </div>
 
         <form phx-change="filter">
-
           <div class="search">
             <input type="text" name="search" placeholder=" 🔍 Search events" />
           </div>
 
           <div class="filters">
-
-            <select name="category[]" >
-              <option value=""> 🏷 All Categories</option>
+            <select name="category[]">
+              <option value="">🏷 All Categories</option>
               <%= for category <- @categories do %>
-                <option value={category.name}><%= category.name %></option>
+                <option value={category.name}>{category.name}</option>
               <% end %>
             </select>
 
             <select name="city">
-              <option value=""> 📍 All Cities</option>
+              <option value="">📍 All Cities</option>
               <%= for city <- @cities do %>
-                <option value={city.name}><%= city.name %></option>
+                <option value={city.name}>{city.name}</option>
               <% end %>
             </select>
 
             <select name="sort">
-              <option value=""> ↕ Sort by date</option>
+              <option value="">↕ Sort by date</option>
               <option value="asc">Newest first</option>
               <option value="desc">Oldest first</option>
             </select>
-
           </div>
-
         </form>
 
-        
         <div class="events-container">
           <%= for event <- @events do %>
-
-            <div class="card" phx-click= "go_to_event" phx-value-id={event.id}>
-
+            <div class="card" phx-click="go_to_event" phx-value-id={event.id}>
               <div class="card-image">
                 <img src={event.image} />
               </div>
 
               <div class="card-content">
-
-                <h3 class="card-title"><%= event.title %></h3>
+                <h3 class="card-title">{event.title}</h3>
 
                 <p class="card-date">
-                  🕒 <%= event.date %> | <%= event.time %>
+                  🕒 {event.date} | {event.time}
                 </p>
 
                 <p class="card-city">
-                  📍 <%= event.venue.city.name %>
+                  📍 {event.venue.city.name}
                 </p>
 
                 <p class="card-price">
-                  💸 <%= event.price %>
+                  💸 {event.price}
                 </p>
-
               </div>
-
             </div>
-
           <% end %>
         </div>
-
       </div>
-
     </div>
 
-    
     <footer class="footer">
-
       <div class="footer-content">
-
         <h3 class="footer-logo">Event Explorer</h3>
 
         <p class="footer-desc">
@@ -146,17 +129,12 @@ defmodule EventExplorerWeb.EventLive.Index do
         <p class="footer-copy">
           © 2026 Event Explorer. All rights reserved.
         </p>
-
       </div>
-
     </footer>
     """
   end
 
   def handle_event("go_to_event", %{"id" => id}, socket) do
-
-
     {:noreply, push_navigate(socket, to: "/events/#{id}")}
-
   end
 end

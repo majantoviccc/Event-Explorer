@@ -5,7 +5,7 @@ defmodule EventExplorer.Events do
   alias EventExplorer.Events.Event
   alias EventExplorer.Categories.Category
   alias EventExplorer.Cities.City
-
+  alias EventExplorer.Venues.Venue
 
   def list_events(params \\ %{}) do
     Event
@@ -17,30 +17,30 @@ defmodule EventExplorer.Events do
     |> Repo.all()
     |> Repo.preload([:categories, venue: :city])
   end
- defp filter_city(query, %{"city" => ""}), do: query
 
-defp filter_city(query, %{"city" => city}) do
-  from e in query,
-    join: v in assoc(e, :venue),
-    join: c in assoc(v, :city),
-    where: c.name == ^city
-end
+  defp filter_city(query, %{"city" => ""}), do: query
 
-defp filter_city(query, _), do: query
+  defp filter_city(query, %{"city" => city}) do
+    from e in query,
+      join: v in assoc(e, :venue),
+      join: c in assoc(v, :city),
+      where: c.name == ^city
+  end
 
-defp filter_category(query, %{"category" => ""}), do: query
+  defp filter_city(query, _), do: query
 
-defp filter_category(query, %{"category" => categories}) do
+  defp filter_category(query, %{"category" => ""}), do: query
 
-  categories = List.wrap(categories)
+  defp filter_category(query, %{"category" => categories}) do
+    categories = List.wrap(categories)
 
-  from e in query,
-    join: c in assoc(e, :categories),
-    where: c.name in ^categories,
-    distinct: e.id
-end
+    from e in query,
+      join: c in assoc(e, :categories),
+      where: c.name in ^categories,
+      distinct: e.id
+  end
 
-defp filter_category(query, _), do: query
+  defp filter_category(query, _), do: query
   defp search_title(query, %{"search" => ""}), do: query
 
   defp search_title(query, %{"search" => term}) do
@@ -49,7 +49,6 @@ defp filter_category(query, _), do: query
   end
 
   defp search_title(query, _), do: query
-
 
   defp sort_by_date(query, %{"sort" => "asc"}) do
     from e in query, order_by: [asc: e.date]
@@ -61,14 +60,12 @@ defp filter_category(query, _), do: query
 
   defp sort_by_date(query, _), do: query
 
-    defp filter_featured(query, %{"featured"=> "true"}) do
-
-      from e in query,
+  defp filter_featured(query, %{"featured" => "true"}) do
+    from e in query,
       where: e.featured == true
+  end
 
-    end
-
-    defp filter_featured(query,_), do: query
+  defp filter_featured(query, _), do: query
 
   def get_event(id) do
     Event
@@ -106,8 +103,8 @@ defp filter_category(query, _), do: query
         changeset
 
       category_ids ->
-          category_ids =
-        Enum.map(category_ids, &String.to_integer/1)
+        category_ids =
+          Enum.map(category_ids, &String.to_integer/1)
 
         categories =
           from(c in Category, where: c.id in ^category_ids)
@@ -117,12 +114,9 @@ defp filter_category(query, _), do: query
     end
   end
 
-
-  def change_event(event, attrs \\%{}) do
-
-    Event.changeset(event,attrs)
+  def change_event(event, attrs \\ %{}) do
+    Event.changeset(event, attrs)
   end
-
 
   def list_categories do
     Repo.all(Category)
@@ -130,5 +124,9 @@ defp filter_category(query, _), do: query
 
   def list_cities do
     Repo.all(City)
+  end
+
+  def list_venues do
+    Repo.all(Venue)
   end
 end

@@ -1,24 +1,45 @@
 defmodule EventExplorerWeb.EventLive.Form do
-
-
   use EventExplorerWeb, :live_view
+
   alias EventExplorer.Events
   alias EventExplorer.Events.Event
 
-
   def mount(_params, _session, socket) do
+    venues = Events.list_venues()
+    categories = Events.list_categories()
 
-    changeset = Events.change_event(%Event{})
+    {:ok,
+     socket
+     |> assign(:venues, venues)
+     |> assign(:categories, categories)
+     |> assign(:event, nil)
+     |> assign(:form, nil)}
+  end
 
-    {:ok, assign(socket, form: to_form(changeset))}
+  def handle_params(params, _url, socket) do
+    case socket.assigns.live_action do
+      :new ->
+        changeset = Events.change_event(%Event{})
 
+        {:noreply,
+         socket
+         |> assign(:event, nil)
+         |> assign(:form, to_form(changeset))}
 
+      :edit ->
+        event = Events.get_event(params["id"])
+
+        changeset = Events.change_event(event)
+
+        {:noreply,
+         socket
+         |> assign(:event, event)
+         |> assign(:form, to_form(changeset))}
+    end
   end
 
   def render(assigns) do
-
     ~H"""
-
     <.form for={@form} phx-submit="save">
       <.input field={@form[:title]} label="Title" />
 
@@ -33,18 +54,60 @@ defmodule EventExplorerWeb.EventLive.Form do
 
       <.input field={@form[:featured]} type="checkbox" label="Featured" />
 
-      <.input field={@form[:venue_id]} type="number" label="Venue ID" />
+      <.input
+        field={@form[:venue_id]}
+        type="select"
+        label="Location"
+        options={Enum.map(@venues, &{&1.name, &1.id})}
+      />
+
+      <fieldset>
+        <legend>Categories</legend>
+
+        <%= for category <- @categories do %>
+          <label>
+            <input
+              type="checkbox"
+              name="event[category_ids][]"
+              value={category.id}
+            />
+            {category.name}
+          </label>
+        <% end %>
+      </fieldset>
 
       <.button>Save</.button>
-   </.form>
+    </.form>
     """
-
   end
 
-  def handle_event("save",%{"event" => params}, socket) do
-
-    {:noreply, socket}
-
+  def handle_event("save", %{"event" => params}, socket) do
+    save_event(socket, socket.assigns.event, params)
   end
 
+  defp save_event(socket, nil, params) do
+    case Events.create_event(params) do
+      {:ok, event} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Event created")
+         |> push_navigate(to: "/events")}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, :form, to_form(changeset))}
+    end
+  end
+
+  defp save_event(socket, event, params) do
+    case Events.update_event(event, params) do
+      {:ok, event} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Event updated")
+         |> push_navigate(to: "/events")}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, :form, to_form(changeset))}
+    end
+  end
 end

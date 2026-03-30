@@ -12,11 +12,10 @@ defmodule EventExplorer.Events.Event do
     field :featured, :boolean
 
     many_to_many :categories, EventExplorer.Categories.Category,
-    join_through: "events_categories",
-    on_replace: :delete
+      join_through: "events_categories",
+      on_replace: :delete
+
     belongs_to :venue, EventExplorer.Venues.Venue
-
-
 
     timestamps()
   end

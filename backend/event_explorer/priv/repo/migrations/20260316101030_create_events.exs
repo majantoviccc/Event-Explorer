@@ -14,12 +14,10 @@ defmodule EventExplorer.Repo.Migrations.CreateEvents do
       add :venue_id, references(:venues, on_delete: :nothing)
       add :category_id, references(:categories, on_delete: :nothing)
 
-
-
       timestamps()
     end
-     create index(:events, [:category_id])
-     create index(:events, [:venue_id])
 
+    create index(:events, [:category_id])
+    create index(:events, [:venue_id])
   end
 end

@@ -21,10 +21,7 @@ defmodule EventExplorerWeb.Router do
     live "/events/new", EventLive.Form, :new
 
     live "/events/:id", EventLive.Show, :show
-     live "/events/:id/edit", EventLive.Form, :edit
-
-    live "/events/new", EventLive.Form, :new
-
+    live "/events/:id/edit", EventLive.Form, :edit
 
     get "/", PageController, :home
   end
@@ -35,10 +32,10 @@ defmodule EventExplorerWeb.Router do
     get "/events", EventController, :index
     get "/events/:id", EventController, :show
     post "/events", EventController, :create
-    put "/events/:id",EventController, :update
-    delete "/events/:id",EventController, :delete
+    put "/events/:id", EventController, :update
+    delete "/events/:id", EventController, :delete
 
-    get "/cities" ,CityController, :index
+    get "/cities", CityController, :index
     get "/categories", CategoryController, :index
   end
 

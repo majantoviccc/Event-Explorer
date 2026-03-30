@@ -6,6 +6,6 @@ defmodule EventExplorerWeb.Api.CityController do
 
   def index(conn, _params) do
     cities = Repo.all(City)
-   render(conn, :index, cities: cities)
+    render(conn, :index, cities: cities)
   end
 end
