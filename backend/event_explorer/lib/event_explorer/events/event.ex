@@ -11,7 +11,9 @@ defmodule EventExplorer.Events.Event do
     field :description, :string
     field :featured, :boolean
 
-   belongs_to :category, EventExplorer.Categories.Category
+    many_to_many :categories, EventExplorer.Categories.Category,
+    join_through: "events_categories",
+    on_replace: :delete
     belongs_to :venue, EventExplorer.Venues.Venue
 
 
@@ -29,10 +31,9 @@ defmodule EventExplorer.Events.Event do
       :image,
       :description,
       :featured,
-      :category_id,
       :venue_id
     ])
-    |> validate_required([:title, :date, :time, :category_id, :venue_id])
+    |> validate_required([:title, :date, :time, :venue_id])
     |> validate_number(:price, greater_than_or_equal_to: 0)
   end
 end

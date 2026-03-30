@@ -5,7 +5,7 @@ defmodule EventExplorerWeb.Api.CategoryJSON do
   def index(%{categories: categories}) do
 
      %{
-         cities: for(category <- categories, do: data(category))
+         categories: for(category <- categories, do: data(category))
 
      }
 

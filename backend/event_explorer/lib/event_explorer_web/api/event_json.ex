@@ -23,10 +23,16 @@ defmodule EventExplorerWeb.Api.EventJSON do
         id: event.venue.id,
         name: event.venue.name
       },
-      category: %{
-        id: event.category.id,
-        name: event.category.name
-      },
+      categories:   Enum.map(event.categories, fn category ->
+
+        %{
+            id: category.id,
+            name: category.name
+        }
+
+
+      end ),
+
       price: event.price,
       image: event.image,
       description: event.description,

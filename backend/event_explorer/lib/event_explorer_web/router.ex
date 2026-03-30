@@ -17,6 +17,15 @@ defmodule EventExplorerWeb.Router do
   scope "/", EventExplorerWeb do
     pipe_through :browser
 
+    live "/events", EventLive.Index, :index
+    live "/events/new", EventLive.Form, :new
+
+    live "/events/:id", EventLive.Show, :show
+     live "/events/:id/edit", EventLive.Form, :edit
+
+    live "/events/new", EventLive.Form, :new
+
+
     get "/", PageController, :home
   end
 

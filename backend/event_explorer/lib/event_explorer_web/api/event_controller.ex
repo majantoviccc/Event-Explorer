@@ -21,9 +21,9 @@ defmodule EventExplorerWeb.Api.EventController do
 end
 
 
-  def create(conn, params) do
+  def create(conn, %{"event"=> event_params}) do
 
-    case Events.create_event(params) do
+    case Events.create_event(event_params) do
 
       {:ok, event} ->
         conn
@@ -36,26 +36,27 @@ end
     end
   end
 
-  def update(conn, %{"id"=> id}= params) do
+ def update(conn, %{"id" => id, "event" => event_params}) do
+  case Events.get_event(id) do
+    nil ->
+      conn
+      |> put_status(:not_found)
+      |> json(%{error: "Event not found"})
 
-      event = Events.get_event(id)
-      case Events.update_event(event, params ) do
+    event ->
+      case Events.update_event(event,event_params) do
+        {:ok, event} ->
+          conn
+          |> put_status(:ok)
+          |> render(:show, event: event)
 
-      {:ok, event} ->
-        conn
-        |>put_status(:ok)
-        |> render(:show, event: event)
-
-
-      {:error, changeset} ->
-       conn
+        {:error, changeset} ->
+          conn
           |> put_status(:unprocessable_entity)
           |> json(%{errors: format_errors(changeset)})
-
-    end
-
+      end
   end
-
+end
   def delete(conn, %{"id" => id}) do
   case Events.get_event(id) do
     nil ->
