@@ -34,10 +34,11 @@ defmodule EventExplorerWeb.Router do
     post "/events", EventController, :create
     put "/events/:id", EventController, :update
     delete "/events/:id", EventController, :delete
+    get "/events/:id/related", EventController, :related
 
     get "/cities", CityController, :index
     get "/categories", CategoryController, :index
-    get "/venues",VenueController, :index
+    get "/venues", VenueController, :index
   end
 
   # Other scopes may use custom stacks.

@@ -1,5 +1,4 @@
 defmodule EventExplorerWeb.Api.VenueController do
-
   use EventExplorerWeb, :controller
 
   alias EventExplorer.Repo
@@ -9,5 +8,4 @@ defmodule EventExplorerWeb.Api.VenueController do
     venues = Repo.all(Venue)
     render(conn, :index, venues: venues)
   end
-
 end

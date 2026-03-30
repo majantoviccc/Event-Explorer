@@ -1,4 +1,3 @@
-
 defmodule EventExplorerWeb.Api.VenueJSON do
   def index(%{venues: venues}) do
     %{

@@ -83,4 +83,17 @@ defmodule EventExplorerWeb.Api.EventController do
       end)
     end)
   end
+
+  def related(conn, %{"id" => id}) do
+    case Events.get_event(id) do
+      nil ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "not_found"})
+
+      event ->
+        events = Events.related_events(event)
+        render(conn, :index, events: events)
+    end
+  end
 end
