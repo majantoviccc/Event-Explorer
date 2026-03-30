@@ -37,6 +37,7 @@ defmodule EventExplorerWeb.Router do
 
     get "/cities", CityController, :index
     get "/categories", CategoryController, :index
+    get "/venues",VenueController, :index
   end
 
   # Other scopes may use custom stacks.

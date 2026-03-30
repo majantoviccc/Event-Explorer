@@ -39,47 +39,52 @@ defmodule EventExplorerWeb.EventLive.Form do
   end
 
   def render(assigns) do
-    ~H"""
-    <.form for={@form} phx-submit="save">
-      <.input field={@form[:title]} label="Title" />
+ ~H"""
+  <.form for={@form} phx-submit="save" class="event-form">
+    <.input field={@form[:title]} label="Title" />
 
+    <div class="row">
       <.input field={@form[:date]} type="date" label="Date" />
       <.input field={@form[:time]} type="time" label="Time" />
-
       <.input field={@form[:price]} type="number" label="Price" />
+    </div>
 
+    <div class="row">
       <.input field={@form[:image]} label="Image URL" />
-
-      <.input field={@form[:description]} type="textarea" label="Description" />
-
-      <.input field={@form[:featured]} type="checkbox" label="Featured" />
-
       <.input
         field={@form[:venue_id]}
         type="select"
         label="Location"
         options={Enum.map(@venues, &{&1.name, &1.id})}
       />
+    </div>
 
-      <fieldset>
-        <legend>Categories</legend>
+    <.input field={@form[:description]} type="textarea" label="Description" />
 
-        <%= for category <- @categories do %>
-          <label>
-            <input
-              type="checkbox"
-              name="event[category_ids][]"
-              value={category.id}
-            />
-            {category.name}
-          </label>
-        <% end %>
-      </fieldset>
+    <div class="checkbox-row">
+      <.input field={@form[:featured]} type="checkbox" label="Featured" />
+    </div>
 
-      <.button>Save</.button>
-    </.form>
-    """
-  end
+    <fieldset>
+      <legend>Categories</legend>
+
+      <%= for category <- @categories do %>
+        <label>
+          <input
+            type="checkbox"
+            name="event[category_ids][]"
+            value={category.id}
+          />
+          <%= category.name %>
+        </label>
+      <% end %>
+    </fieldset>
+
+    <.button>Save</.button>
+  </.form>
+  """
+end
+
 
   def handle_event("save", %{"event" => params}, socket) do
     save_event(socket, socket.assigns.event, params)

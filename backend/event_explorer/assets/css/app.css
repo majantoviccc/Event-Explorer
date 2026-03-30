@@ -459,3 +459,123 @@ button:hover {
   background: #dc2626;
   padding:10px
 }
+.event-form {
+  max-width: 820px;
+  margin: 50px auto;
+  padding: 32px;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 26px;
+}
+
+.event-form {
+  max-width: 780px;
+  margin: 50px auto;
+  padding: 28px 32px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px 28px;
+}
+
+.event-form {
+  max-width: 750px;
+  margin: 50px auto;
+  padding: 30px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.event-form select,
+.event-form input[name="event[image]"] {
+  grid-column: span 2;
+  height: 44px;
+  font-size: 15px;
+}
+
+.row {
+  display: flex;
+  gap: 15px;
+}
+
+.row > * {
+  flex: 1;
+}
+
+.checkbox-row {
+  margin-top: 5px;
+}
+
+.event-form label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 5px;
+}
+
+.event-form input,
+.event-form textarea,
+.event-form select {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #dbeafe;
+  background: #f8fbff;
+  font-size: 14px;
+}
+
+.event-form input:focus,
+.event-form textarea:focus,
+.event-form select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.event-form textarea {
+  min-height: 100px;
+}
+
+.event-form fieldset {
+  border: none;
+  margin-top: 10px;
+}
+
+.event-form legend {
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.event-form fieldset label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+  margin: 4px;
+  cursor: pointer;
+}
+
+.event-form button {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
