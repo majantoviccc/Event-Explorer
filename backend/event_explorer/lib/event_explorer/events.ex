@@ -18,32 +18,37 @@ defmodule EventExplorer.Events do
     |> Repo.preload([:categories, venue: :city])
   end
 
-  defp filter_city(query, %{"city" => ""}), do: query
-
-  defp filter_city(query, %{"city" => city}) do
+  defp filter_city(query, %{"city" => city}) when city != "" do
     from e in query,
       join: v in assoc(e, :venue),
       join: c in assoc(v, :city),
-      where: c.name == ^city
+      where: c.name == ^city,
+      distinct: true
   end
 
   defp filter_city(query, _), do: query
 
-  defp filter_category(query, %{"category" => ""}), do: query
-
   defp filter_category(query, %{"category" => categories}) do
-    categories = List.wrap(categories)
+    categories =
+      categories
+      |> List.wrap()
+      |> Enum.reject(&(&1 == ""))
 
-    from e in query,
-      join: c in assoc(e, :categories),
-      where: c.name in ^categories,
-      distinct: e.id
+    if categories == [] do
+      query
+    else
+      from e in query,
+        join: c in assoc(e, :categories),
+        where: c.name in ^categories,
+        group_by: e.id,
+        having: count(c.id) == ^length(categories),
+        distinct: true
+    end
   end
 
   defp filter_category(query, _), do: query
-  defp search_title(query, %{"search" => ""}), do: query
 
-  defp search_title(query, %{"search" => term}) do
+  defp search_title(query, %{"search" => term}) when term != "" do
     from e in query,
       where: ilike(e.title, ^"%#{term}%")
   end
@@ -119,28 +124,23 @@ defmodule EventExplorer.Events do
   end
 
   def related_events(event) do
-  event = Repo.preload(event, [:categories, venue: :city])
+    event = Repo.preload(event, [:categories, venue: :city])
 
-  category_ids = Enum.map(event.categories, & &1.id)
+    category_ids = Enum.map(event.categories, & &1.id)
 
-  from(e in Event,
-    join: v in assoc(e, :venue),
-    join: c in assoc(v, :city),
-    join: cat in assoc(e, :categories),
-    where:
-     ( c.id == ^event.venue.city_id or
-      cat.id in ^category_ids )and
-      e.id != ^event.id,
-    distinct: e.id,
-    limit: 5
-  )
-  |> Repo.all()
-  |> Repo.preload([:categories, venue: :city])
-end
-
-
-
-
+    from(e in Event,
+      join: v in assoc(e, :venue),
+      join: c in assoc(v, :city),
+      join: cat in assoc(e, :categories),
+      where:
+        (c.id == ^event.venue.city_id or cat.id in ^category_ids) and
+          e.id != ^event.id,
+      distinct: e.id,
+      limit: 5
+    )
+    |> Repo.all()
+    |> Repo.preload([:categories, venue: :city])
+  end
 
   def list_categories do
     Repo.all(Category)

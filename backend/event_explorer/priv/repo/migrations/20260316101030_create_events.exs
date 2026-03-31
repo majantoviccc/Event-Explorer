@@ -13,10 +13,8 @@ defmodule EventExplorer.Repo.Migrations.CreateEvents do
 
       add :venue_id, references(:venues, on_delete: :nothing)
 
-
       timestamps()
     end
-
 
     create index(:events, [:venue_id])
   end

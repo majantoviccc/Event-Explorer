@@ -17,7 +17,10 @@ defmodule EventExplorerWeb.EventLive.Index do
   end
 
   def handle_event("filter", params, socket) do
+    IO.inspect(params, label: "PARAMS")
+
     events = Events.list_events(params)
+
     {:noreply, assign(socket, events: events)}
   end
 
@@ -51,31 +54,33 @@ defmodule EventExplorerWeb.EventLive.Index do
         </div>
 
         <form phx-change="filter">
-          <div class="search">
-            <input type="text" name="search" placeholder=" 🔍 Search events" />
-          </div>
+          <input
+            type="text"
+            name="search"
+            placeholder="🔍 Search events..."
+          />
+          <select name="city">
+            <option value="">📍 All cities</option>
 
-          <div class="filters">
-            <select name="category[]">
-              <option value="">🏷 All Categories</option>
-              <%= for category <- @categories do %>
-                <option value={category.name}>{category.name}</option>
-              <% end %>
-            </select>
+            <%= for city <- @cities do %>
+              <option value={city.name}>{city.name}</option>
+            <% end %>
+          </select>
+          <select name="sort">
+            <option value="">↕ Sort by date</option>
+            <option value="asc">Oldest first</option>
+            <option value="desc">Newest first</option>
+          </select>
 
-            <select name="city">
-              <option value="">📍 All Cities</option>
-              <%= for city <- @cities do %>
-                <option value={city.name}>{city.name}</option>
-              <% end %>
-            </select>
+          <select name="category">
+            <option value="">🏷 All categories</option>
 
-            <select name="sort">
-              <option value="">↕ Sort by date</option>
-              <option value="asc">Newest first</option>
-              <option value="desc">Oldest first</option>
-            </select>
-          </div>
+            <%= for category <- @categories do %>
+              <option value={category.name}>
+                {category.name}
+              </option>
+            <% end %>
+          </select>
         </form>
 
         <div class="events-container">

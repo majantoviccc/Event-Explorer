@@ -2,8 +2,8 @@ import Config
 
 # Configure your database
 config :event_explorer, EventExplorer.Repo,
-  username: "postgres",
-  password: "postgres",
+  username: System.get_env("USER"),
+  password: nil,
   hostname: "localhost",
   database: "event_explorer_dev",
   stacktrace: true,
