@@ -36,12 +36,12 @@ defmodule EventExplorerWeb.Api.EventController do
 
   def update(conn, %{"id" => id, "event" => event_params}) do
     case Events.get_event(id) do
-      nil ->
+      {:error, :not_found} ->
         conn
         |> put_status(:not_found)
         |> json(%{error: "Event not found"})
 
-      event ->
+      {:ok, event} ->
         case Events.update_event(event, event_params) do
           {:ok, event} ->
             conn
@@ -58,12 +58,12 @@ defmodule EventExplorerWeb.Api.EventController do
 
   def delete(conn, %{"id" => id}) do
     case Events.get_event(id) do
-      nil ->
+      {:error, :not_found} ->
         conn
         |> put_status(:not_found)
         |> json(%{error: "Event not found"})
 
-      event ->
+      {:ok, event} ->
         case Events.delete_event(event) do
           {:ok, _} ->
             send_resp(conn, :no_content, "")

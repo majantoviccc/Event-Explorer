@@ -6,6 +6,7 @@ defmodule EventExplorer.Events do
   alias EventExplorer.Categories.Category
   alias EventExplorer.Cities.City
   alias EventExplorer.Venues.Venue
+  alias EventExplorer.Uploaders.Cloudinary
 
   def list_events(params \\ %{}) do
     Event
@@ -73,12 +74,26 @@ defmodule EventExplorer.Events do
   defp filter_featured(query, _), do: query
 
   def get_event(id) do
-    Event
-    |> Repo.get(id)
-    |> Repo.preload([:categories, venue: :city])
+    event = Repo.get(Event, id)
+
+    if event do
+      {:ok, Repo.preload(event, [:categories, venue: :city])}
+    else
+      {:error, :not_found}
+    end
   end
 
   def create_event(attrs \\ %{}) do
+    attrs =
+      case Map.get(attrs, "image") do
+        %Plug.Upload{path: path} ->
+          {:ok, url} = Cloudinary.upload_image(path)
+          Map.put(attrs, "image", url)
+
+        _ ->
+          attrs
+      end
+
     %Event{}
     |> Event.changeset(attrs)
     |> put_categories(attrs)
@@ -90,6 +105,16 @@ defmodule EventExplorer.Events do
   end
 
   def update_event(event, attrs) do
+    attrs =
+      case Map.get(attrs, "image") do
+        %Plug.Upload{path: path} ->
+          {:ok, url} = Cloudinary.upload_image(path)
+          Map.put(attrs, "image", url)
+
+        _ ->
+          attrs
+      end
+
     event
     |> Event.changeset(attrs)
     |> put_categories(attrs)
