@@ -33,7 +33,11 @@ defmodule EventExplorerWeb.Api.EventController do
 
   @doc "Creates a new event."
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def create(conn, %{"event" => event_params}) do
+  def create(conn, params) do
+    event_params = params["event"] || params
+
+    IO.inspect(event_params)
+
     case Events.create_event(event_params) do
       {:ok, event} ->
         conn
@@ -49,7 +53,9 @@ defmodule EventExplorerWeb.Api.EventController do
 
   @doc "Updates an existing event."
   @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def update(conn, %{"id" => id, "event" => event_params}) do
+  def update(conn, %{"id" => id} = params) do
+    event_params = params["event"] || params
+
     case Events.get_event(id) do
       {:error, :not_found} ->
         conn
@@ -107,7 +113,6 @@ defmodule EventExplorerWeb.Api.EventController do
         render(conn, :index, events: events)
     end
   end
-
 
   defp format_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->

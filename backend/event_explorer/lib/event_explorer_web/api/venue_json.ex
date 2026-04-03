@@ -11,7 +11,6 @@ defmodule EventExplorerWeb.Api.VenueJSON do
     }
   end
 
-
   defp data(venue) do
     %{
       id: venue.id,

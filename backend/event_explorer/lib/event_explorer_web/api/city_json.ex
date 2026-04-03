@@ -11,7 +11,6 @@ defmodule EventExplorerWeb.Api.CityJSON do
     }
   end
 
-
   defp data(city) do
     %{
       id: city.id,

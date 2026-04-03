@@ -17,7 +17,8 @@ defmodule EventExplorer.MixProject do
         coveralls: :test,
         "coveralls.detail": :test,
         "coveralls.post": :test,
-        "coveralls.html": :test
+        "coveralls.html": :test,
+        docs: "docs"
       ]
     ]
   end
@@ -74,7 +75,8 @@ defmodule EventExplorer.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:cloudex, "~> 1.4"},
-      {:excoveralls, "~> 0.18", only: :test}
+      {:excoveralls, "~> 0.18", only: :test},
+      {:dotenvy, "~> 0.8"}
     ]
   end
 

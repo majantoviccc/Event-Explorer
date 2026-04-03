@@ -49,7 +49,6 @@ defmodule EventExplorerWeb.Api.EventJSON do
     }
   end
 
-  
   defp format_price(nil), do: nil
   defp format_price(price), do: Decimal.to_string(price)
 end

@@ -79,13 +79,13 @@ defmodule EventExplorerWeb.Api.EventControllerTest do
           city_id: city.id
         })
 
-     params = %{
-  "title" => "Concert",
-  "description" => "Great event",
-  "venue_id" => venue.id,
-  "date" => "2026-01-01",
-  "time" => "20:00:00"
-}
+      params = %{
+        "title" => "Concert",
+        "description" => "Great event",
+        "venue_id" => venue.id,
+        "date" => "2026-01-01",
+        "time" => "20:00:00"
+      }
 
       conn = post(conn, "/api/events", %{"event" => params})
       response = json_response(conn, 201)

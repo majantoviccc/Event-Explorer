@@ -13,8 +13,7 @@ defmodule EventExplorer.Categories.Category do
   schema "categories" do
     field :name, :string
 
-    many_to_many :events, Event,
-      join_through: "events_categories"
+    many_to_many :events, Event, join_through: "events_categories"
 
     timestamps()
   end

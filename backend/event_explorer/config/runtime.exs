@@ -1,5 +1,12 @@
 import Config
 
+
+
+
+config :cloudex,
+  api_key: System.get_env("CLOUDEX_API_KEY"),
+  api_secret: System.get_env("CLOUDEX_SECRET"),
+  cloud_name: System.get_env("CLOUDEX_CLOUD_NAME")
 # config/runtime.exs is executed for all environments, including
 # during releases. It is executed after compilation and before the
 # system starts, so it is typically used to load production configuration

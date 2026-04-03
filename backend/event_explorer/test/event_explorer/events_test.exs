@@ -64,49 +64,48 @@ defmodule EventExplorer.EventsTest do
     assert length(events) == 1
     assert hd(events).id == e1.id
     ids = Enum.map(events, & &1.id)
-
   end
 
   test "list_events returns empty list when city does not exist" do
-  {:ok, city} = Repo.insert(%City{name: "Podgorica"})
-  {:ok, venue} = Repo.insert(%Venue{name: "V1", city_id: city.id})
+    {:ok, city} = Repo.insert(%City{name: "Podgorica"})
+    {:ok, venue} = Repo.insert(%Venue{name: "V1", city_id: city.id})
 
-  Repo.insert!(%Event{
-    title: "Event",
-    date: ~D[2025-01-01],
-    time: ~T[12:00:00],
-    venue_id: venue.id
-  })
+    Repo.insert!(%Event{
+      title: "Event",
+      date: ~D[2025-01-01],
+      time: ~T[12:00:00],
+      venue_id: venue.id
+    })
 
-  events = Events.list_events(%{"city" => "Niksic"})
+    events = Events.list_events(%{"city" => "Niksic"})
 
-  assert events == []
-end
+    assert events == []
+  end
 
   test "list_events returns all events when city is empty string" do
-  {:ok, city} = Repo.insert(%City{name: "Podgorica"})
-  {:ok, venue} = Repo.insert(%Venue{name: "V1", city_id: city.id})
+    {:ok, city} = Repo.insert(%City{name: "Podgorica"})
+    {:ok, venue} = Repo.insert(%Venue{name: "V1", city_id: city.id})
 
-  {:ok, e1} =
-    Repo.insert(%Event{
-      title: "Event 1",
-      date: ~D[2025-01-01],
-      time: ~T[12:00:00],
-      venue_id: venue.id
-    })
+    {:ok, e1} =
+      Repo.insert(%Event{
+        title: "Event 1",
+        date: ~D[2025-01-01],
+        time: ~T[12:00:00],
+        venue_id: venue.id
+      })
 
-  {:ok, _e2} =
-    Repo.insert(%Event{
-      title: "Event 2",
-      date: ~D[2025-01-01],
-      time: ~T[12:00:00],
-      venue_id: venue.id
-    })
+    {:ok, _e2} =
+      Repo.insert(%Event{
+        title: "Event 2",
+        date: ~D[2025-01-01],
+        time: ~T[12:00:00],
+        venue_id: venue.id
+      })
 
-  events = Events.list_events(%{"city" => ""})
+    events = Events.list_events(%{"city" => ""})
 
-  assert length(events) == 2
-end
+    assert length(events) == 2
+  end
 
   test "list_events filters events by one category" do
     {:ok, city} = Repo.insert(%City{name: "Podgorica"})
@@ -217,45 +216,47 @@ end
 
     assert length(events) == 1
   end
+
   test "list_events ignores empty values mixed with categories" do
-  {:ok, city} = Repo.insert(%City{name: "Podgorica"})
-  {:ok, venue} = Repo.insert(%Venue{name: "V1", city_id: city.id})
+    {:ok, city} = Repo.insert(%City{name: "Podgorica"})
+    {:ok, venue} = Repo.insert(%Venue{name: "V1", city_id: city.id})
 
-  {:ok, cat} = Repo.insert(%Category{name: "Music"})
+    {:ok, cat} = Repo.insert(%Category{name: "Music"})
 
-  {:ok, event} =
-    Repo.insert(%Event{
-      title: "Music event",
+    {:ok, event} =
+      Repo.insert(%Event{
+        title: "Music event",
+        date: ~D[2025-01-01],
+        time: ~T[12:00:00],
+        venue_id: venue.id
+      })
+
+    event = Repo.preload(event, :categories)
+
+    Events.update_event(event, %{
+      "category_ids" => [Integer.to_string(cat.id)]
+    })
+
+    events = Events.list_events(%{"category" => ["Music", ""]})
+
+    assert length(events) == 1
+  end
+
+  test "list_events returns empty list when category does not exist" do
+    {:ok, city} = Repo.insert(%City{name: "Podgorica"})
+    {:ok, venue} = Repo.insert(%Venue{name: "V1", city_id: city.id})
+
+    Repo.insert!(%Event{
+      title: "Event",
       date: ~D[2025-01-01],
       time: ~T[12:00:00],
       venue_id: venue.id
     })
 
-  event = Repo.preload(event, :categories)
+    events = Events.list_events(%{"category" => ["Nepostojeca"]})
 
-  Events.update_event(event, %{
-    "category_ids" => [Integer.to_string(cat.id)]
-  })
-
-  events = Events.list_events(%{"category" => ["Music", ""]})
-
-  assert length(events) == 1
-end
-test "list_events returns empty list when category does not exist" do
-  {:ok, city} = Repo.insert(%City{name: "Podgorica"})
-  {:ok, venue} = Repo.insert(%Venue{name: "V1", city_id: city.id})
-
-  Repo.insert!(%Event{
-    title: "Event",
-    date: ~D[2025-01-01],
-    time: ~T[12:00:00],
-    venue_id: venue.id
-  })
-
-  events = Events.list_events(%{"category" => ["Nepostojeca"]})
-
-  assert events == []
-end
+    assert events == []
+  end
 
   test "list_events filters events by search term" do
     {:ok, city} = Repo.insert(%City{name: "Podgorica"})
@@ -283,51 +284,51 @@ end
     assert hd(events).id == e1.id
   end
 
- test "list_events search returns no results for unknown term" do
-  {:ok, city} = Repo.insert(%City{name: "Podgorica"})
-  {:ok, venue} = Repo.insert(%Venue{name: "V1", city_id: city.id})
+  test "list_events search returns no results for unknown term" do
+    {:ok, city} = Repo.insert(%City{name: "Podgorica"})
+    {:ok, venue} = Repo.insert(%Venue{name: "V1", city_id: city.id})
 
-  Repo.insert!(%Event{
-    title: "Rock concert",
-    date: ~D[2025-01-01],
-    time: ~T[12:00:00],
-    venue_id: venue.id
-  })
+    Repo.insert!(%Event{
+      title: "Rock concert",
+      date: ~D[2025-01-01],
+      time: ~T[12:00:00],
+      venue_id: venue.id
+    })
 
-  Repo.insert!(%Event{
-    title: "Tech meetup",
-    date: ~D[2025-01-01],
-    time: ~T[12:00:00],
-    venue_id: venue.id
-  })
+    Repo.insert!(%Event{
+      title: "Tech meetup",
+      date: ~D[2025-01-01],
+      time: ~T[12:00:00],
+      venue_id: venue.id
+    })
 
-  events = Events.list_events(%{"search" => "Unknown"})
+    events = Events.list_events(%{"search" => "Unknown"})
 
-  assert events == []
-end
+    assert events == []
+  end
 
   test "list_events returns all events when search is empty" do
-  {:ok, city} = Repo.insert(%City{name: "Podgorica"})
-  {:ok, venue} = Repo.insert(%Venue{name: "V1", city_id: city.id})
+    {:ok, city} = Repo.insert(%City{name: "Podgorica"})
+    {:ok, venue} = Repo.insert(%Venue{name: "V1", city_id: city.id})
 
-  Repo.insert!(%Event{
-    title: "Event 1",
-    date: ~D[2025-01-01],
-    time: ~T[12:00:00],
-    venue_id: venue.id
-  })
+    Repo.insert!(%Event{
+      title: "Event 1",
+      date: ~D[2025-01-01],
+      time: ~T[12:00:00],
+      venue_id: venue.id
+    })
 
-  Repo.insert!(%Event{
-    title: "Event 2",
-    date: ~D[2025-01-01],
-    time: ~T[12:00:00],
-    venue_id: venue.id
-  })
+    Repo.insert!(%Event{
+      title: "Event 2",
+      date: ~D[2025-01-01],
+      time: ~T[12:00:00],
+      venue_id: venue.id
+    })
 
-  events = Events.list_events(%{"search" => ""})
+    events = Events.list_events(%{"search" => ""})
 
-  assert length(events) == 2
-end
+    assert length(events) == 2
+  end
 
   test "list_events sorts events ascending" do
     {:ok, city} = Repo.insert(%City{name: "Podgorica"})
@@ -379,8 +380,6 @@ end
     assert Enum.map(events, & &1.id) == [e2.id, e1.id]
   end
 
-
-
   test "list_events filters featured events" do
     {:ok, city} = Repo.insert(%City{name: "Podgorica"})
     {:ok, venue} = Repo.insert(%Venue{name: "V1", city_id: city.id})
@@ -425,8 +424,6 @@ end
 
     assert length(events) == 1
   end
-
-
 
   test "list_events filters events by city and category" do
     {:ok, city} = Repo.insert(%City{name: "Podgorica"})
@@ -479,22 +476,22 @@ end
     assert result.id == event.id
   end
 
- test "get_event returns error when event does not exist" do
-  {:ok, city} = Repo.insert(%City{name: "Podgorica"})
-  {:ok, venue} = Repo.insert(%Venue{name: "V1", city_id: city.id})
+  test "get_event returns error when event does not exist" do
+    {:ok, city} = Repo.insert(%City{name: "Podgorica"})
+    {:ok, venue} = Repo.insert(%Venue{name: "V1", city_id: city.id})
 
-  {:ok, event} =
-    Repo.insert(%Event{
-      title: "Test",
-      date: ~D[2025-01-01],
-      time: ~T[12:00:00],
-      venue_id: venue.id
-    })
+    {:ok, event} =
+      Repo.insert(%Event{
+        title: "Test",
+        date: ~D[2025-01-01],
+        time: ~T[12:00:00],
+        venue_id: venue.id
+      })
 
-  non_existing_id = event.id + 1000
+    non_existing_id = event.id + 1000
 
-  assert {:error, :not_found} = Events.get_event(non_existing_id)
-end
+    assert {:error, :not_found} = Events.get_event(non_existing_id)
+  end
 
   test "create_event creates event without image" do
     {:ok, city} = Repo.insert(%City{name: "Podgorica"})
@@ -732,8 +729,6 @@ end
         time: ~T[12:00:00],
         venue_id: venue.id
       })
-
-
 
     Events.update_event(e1, %{"category_ids" => [Integer.to_string(cat.id)]})
     Events.update_event(e2, %{"category_ids" => [Integer.to_string(cat.id)]})
