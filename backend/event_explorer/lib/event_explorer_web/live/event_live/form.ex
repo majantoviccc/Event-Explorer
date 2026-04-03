@@ -4,9 +4,13 @@ defmodule EventExplorerWeb.EventLive.Form do
   alias EventExplorer.Events
   alias EventExplorer.Events.Event
 
+  alias EventExplorer.Categories
+  alias EventExplorer.Cities
+  alias EventExplorer.Venues
+
   def mount(_params, _session, socket) do
-    venues = Events.list_venues()
-    categories = Events.list_categories()
+    venues = Venues.list_venues()
+    categories = Categories.list_categories()
 
     {:ok,
      socket
@@ -40,7 +44,7 @@ defmodule EventExplorerWeb.EventLive.Form do
 
   def render(assigns) do
     ~H"""
-    <.form for={@form} phx-submit="save" class="event-form">
+    <.form for={@form} phx-submit="save" class="event-form" multipart={true}>
       <.input field={@form[:title]} label="Title" />
 
       <div class="row">
@@ -50,7 +54,7 @@ defmodule EventExplorerWeb.EventLive.Form do
       </div>
 
       <div class="row">
-        <.input field={@form[:image]} label="Image URL" />
+        <.input field={@form[:image]} type="file" label="Upload Image" />
         <.input
           field={@form[:venue_id]}
           type="select"
@@ -85,11 +89,11 @@ defmodule EventExplorerWeb.EventLive.Form do
     """
   end
 
-  def handle_event("save", %{"event" => params}, socket) do
-    save_event(socket, socket.assigns.event, params)
+  def handle_event("save", %{"event" => event_params}, socket) do
+    save_event(socket, socket.assigns.live_action, event_params)
   end
 
-  defp save_event(socket, nil, params) do
+  defp save_event(socket, :new, params) do
     case Events.create_event(params) do
       {:ok, event} ->
         {:noreply,
@@ -102,7 +106,9 @@ defmodule EventExplorerWeb.EventLive.Form do
     end
   end
 
-  defp save_event(socket, event, params) do
+  defp save_event(socket, :edit, params) do
+    event = socket.assigns.event
+
     case Events.update_event(event, params) do
       {:ok, event} ->
         {:noreply,

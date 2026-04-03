@@ -1,13 +1,28 @@
 defmodule EventExplorer.Events do
+  @moduledoc """
+  Context module responsible for managing events.
+
+  Provides functionality for listing, filtering, creating,
+  updating, deleting, and retrieving events.
+
+  Supports advanced querying with filters such as city,
+  category, search term, sorting, and featured flag.
+
+  Also handles image upload and deletion via Cloudinary
+  and manages many-to-many relationships with categories.
+  """
+
   import Ecto.Query
 
   alias EventExplorer.Repo
   alias EventExplorer.Events.Event
   alias EventExplorer.Categories.Category
-  alias EventExplorer.Cities.City
-  alias EventExplorer.Venues.Venue
   alias EventExplorer.Uploaders.Cloudinary
 
+  @event_preloads [:categories, venue: :city]
+
+  @doc "Returns a list of events with optional filters."
+  @spec list_events(map()) :: list()
   def list_events(params \\ %{}) do
     Event
     |> filter_city(params)
@@ -15,16 +30,16 @@ defmodule EventExplorer.Events do
     |> search_title(params)
     |> sort_by_date(params)
     |> filter_featured(params)
+    |> distinct(true)
+    |> preload(^@event_preloads)
     |> Repo.all()
-    |> Repo.preload([:categories, venue: :city])
   end
 
   defp filter_city(query, %{"city" => city}) when city != "" do
     from e in query,
       join: v in assoc(e, :venue),
       join: c in assoc(v, :city),
-      where: c.name == ^city,
-      distinct: true
+      where: c.name == ^city
   end
 
   defp filter_city(query, _), do: query
@@ -42,8 +57,7 @@ defmodule EventExplorer.Events do
         join: c in assoc(e, :categories),
         where: c.name in ^categories,
         group_by: e.id,
-        having: count(c.id) == ^length(categories),
-        distinct: true
+        having: count(c.id) == ^length(categories)
     end
   end
 
@@ -73,22 +87,31 @@ defmodule EventExplorer.Events do
 
   defp filter_featured(query, _), do: query
 
+  @doc "Fetches an event by ID."
+  @spec get_event(integer()) :: {:ok, map()} | {:error, :not_found}
   def get_event(id) do
-    event = Repo.get(Event, id)
-
-    if event do
-      {:ok, Repo.preload(event, [:categories, venue: :city])}
-    else
-      {:error, :not_found}
+    case Repo.get(Event, id) do
+      nil -> {:error, :not_found}
+      event -> {:ok, Repo.preload(event, @event_preloads)}
     end
   end
 
-  def create_event(attrs \\ %{}) do
+  @doc "Creates a new event with optional image and categories."
+  @spec create_event(map()) ::
+          {:ok, map()} | {:error, Ecto.Changeset.t()}
+  def create_event(attrs) do
     attrs =
       case Map.get(attrs, "image") do
         %Plug.Upload{path: path} ->
-          {:ok, url} = Cloudinary.upload_image(path)
-          Map.put(attrs, "image", url)
+          case Cloudinary.upload_image(path) do
+            {:ok, %{url: url, public_id: public_id}} ->
+              attrs
+              |> Map.put("image", url)
+              |> Map.put("public_id", public_id)
+
+            {:error, _} ->
+              attrs
+          end
 
         _ ->
           attrs
@@ -99,17 +122,33 @@ defmodule EventExplorer.Events do
     |> put_categories(attrs)
     |> Repo.insert()
     |> case do
-      {:ok, event} -> {:ok, Repo.preload(event, [:categories, venue: :city])}
+      {:ok, event} -> {:ok, Repo.preload(event, @event_preloads)}
       {:error, changeset} -> {:error, changeset}
     end
   end
 
+  @doc "Updates an existing event, including image and categories."
+  @spec update_event(map(), map()) ::
+          {:ok, map()} | {:error, Ecto.Changeset.t()}
   def update_event(event, attrs) do
+    event = Repo.preload(event, :categories)
+
     attrs =
       case Map.get(attrs, "image") do
         %Plug.Upload{path: path} ->
-          {:ok, url} = Cloudinary.upload_image(path)
-          Map.put(attrs, "image", url)
+          case Cloudinary.upload_image(path) do
+            {:ok, %{url: url, public_id: public_id}} ->
+              if event.public_id do
+                Cloudinary.delete_image(event.public_id)
+              end
+
+              attrs
+              |> Map.put("image", url)
+              |> Map.put("public_id", public_id)
+
+            {:error, _} ->
+              attrs
+          end
 
         _ ->
           attrs
@@ -120,12 +159,21 @@ defmodule EventExplorer.Events do
     |> put_categories(attrs)
     |> Repo.update()
     |> case do
-      {:ok, event} -> {:ok, Repo.preload(event, [:categories, venue: :city])}
+      {:ok, event} -> {:ok, Repo.preload(event, @event_preloads)}
       {:error, changeset} -> {:error, changeset}
     end
   end
 
-  def delete_event(event), do: Repo.delete(event)
+  @doc "Deletes an event and its image if present."
+  @spec delete_event(map()) ::
+          {:ok, map()} | {:error, Ecto.Changeset.t()}
+  def delete_event(event) do
+    if event.public_id do
+      Cloudinary.delete_image(event.public_id)
+    end
+
+    Repo.delete(event)
+  end
 
   defp put_categories(changeset, attrs) do
     case Map.get(attrs, "category_ids", []) do
@@ -144,38 +192,30 @@ defmodule EventExplorer.Events do
     end
   end
 
+  @doc "Returns a changeset for an event."
+  @spec change_event(map(), map()) :: Ecto.Changeset.t()
   def change_event(event, attrs \\ %{}) do
     Event.changeset(event, attrs)
   end
 
+  @doc "Returns related events based on city or categories."
+  @spec related_events(map()) :: list()
   def related_events(event) do
-    event = Repo.preload(event, [:categories, venue: :city])
+    event = Repo.preload(event, @event_preloads)
 
     category_ids = Enum.map(event.categories, & &1.id)
 
-    from(e in Event,
-      join: v in assoc(e, :venue),
-      join: c in assoc(v, :city),
-      join: cat in assoc(e, :categories),
-      where:
-        (c.id == ^event.venue.city_id or cat.id in ^category_ids) and
-          e.id != ^event.id,
-      distinct: e.id,
-      limit: 5
+    Event
+    |> join(:inner, [e], v in assoc(e, :venue))
+    |> join(:inner, [e, v], c in assoc(v, :city))
+    |> join(:inner, [e, v, c], cat in assoc(e, :categories))
+    |> where(
+      [e, v, c, cat],
+      (c.id == ^event.venue.city_id or cat.id in ^category_ids) and
+        e.id != ^event.id
     )
+    |> limit(5)
+    |> preload(^@event_preloads)
     |> Repo.all()
-    |> Repo.preload([:categories, venue: :city])
-  end
-
-  def list_categories do
-    Repo.all(Category)
-  end
-
-  def list_cities do
-    Repo.all(City)
-  end
-
-  def list_venues do
-    Repo.all(Venue)
   end
 end

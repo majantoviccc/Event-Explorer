@@ -2,11 +2,14 @@ defmodule EventExplorerWeb.EventLive.Index do
   use EventExplorerWeb, :live_view
 
   alias EventExplorer.Events
+  alias EventExplorer.Categories
+  alias EventExplorer.Cities
+  alias EventExplorer.Venues
 
   def mount(_params, _session, socket) do
     events = Events.list_events(%{})
-    categories = Events.list_categories()
-    cities = Events.list_cities()
+    categories = Categories.list_categories()
+    cities = Cities.list_cities()
 
     {:ok,
      assign(socket,

@@ -4,16 +4,20 @@ defmodule EventExplorerWeb.EventLive.Show do
   alias EventExplorer.Events
 
   def mount(%{"id" => id}, _session, socket) do
-    event = Events.get_event(id)
+    case Events.get_event(id) do
+      {:ok, event} ->
+        {:ok, assign(socket, event: event)}
 
-    {:ok, assign(socket, event: event)}
+      {:error, :not_found} ->
+        {:ok, push_navigate(socket, to: "/events")}
+    end
   end
 
   def render(assigns) do
     ~H"""
     <div class="show-page">
       <div class="details-header">
-        <a href="/events" class="back-btn">←</a>
+        <.link navigate="/events" class="back-btn">←</.link>
         <span>Event Details</span>
       </div>
 
@@ -22,11 +26,16 @@ defmodule EventExplorerWeb.EventLive.Show do
           Edit
         </.link>
 
-        <button class="delete-btn" phx-click="delete" phx-value-id={@event.id}>Delete</button>
+        <button class="delete-btn" phx-click="delete">
+          Delete
+        </button>
       </div>
 
       <div class="event-card">
-        <img src={@event.image} class="event-image" />
+        <img
+          src={@event.image || "/images/placeholder.png"}
+          class="event-image"
+        />
 
         <div class="event-content">
           <h1>{@event.title}</h1>
@@ -46,11 +55,13 @@ defmodule EventExplorerWeb.EventLive.Show do
               </span>
             <% end %>
           </div>
+
           <p class="event-description">
             Description: {@event.description}
           </p>
+
           <p class="event-price">
-            💸 {@event.price}
+            💸 {Decimal.to_string(@event.price)}
           </p>
         </div>
       </div>
@@ -58,8 +69,8 @@ defmodule EventExplorerWeb.EventLive.Show do
     """
   end
 
-  def handle_event("delete", %{"id" => id}, socket) do
-    event = Events.get_event(id)
+  def handle_event("delete", _params, socket) do
+    event = socket.assigns.event
 
     case Events.delete_event(event) do
       {:ok, _} ->
