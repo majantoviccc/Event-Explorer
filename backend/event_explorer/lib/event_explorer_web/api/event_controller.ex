@@ -108,7 +108,7 @@ defmodule EventExplorerWeb.Api.EventController do
     end
   end
 
-  
+
   defp format_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
       Enum.reduce(opts, msg, fn {key, value}, acc ->
