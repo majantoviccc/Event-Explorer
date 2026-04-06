@@ -1,0 +1,1 @@
+mix coveralls.detail  --filter backend/event_explorer/lib/event_explorer/events/event.ex
