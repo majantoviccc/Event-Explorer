@@ -5,6 +5,11 @@ alias EventExplorer.Venues.Venue
 alias EventExplorer.Events.Event
 alias EventExplorer.Uploaders.Cloudinary
 
+get_or_insert = fn schema, attrs ->
+  Repo.get_by(schema, attrs) ||
+    Repo.insert!(struct(schema, attrs), on_conflict: :nothing)
+end
+
 cities = [
   "Belgrade","Tallinn","London","Amsterdam","Milan",
   "Paris","Cannes","Zurich","Barcelona","Lisbon",
@@ -13,7 +18,7 @@ cities = [
 
 city_map =
   Enum.map(cities, fn name ->
-    city = Repo.insert!(%City{name: name})
+    city = get_or_insert.(City, %{name: name})
     {name, city}
   end)
   |> Enum.into(%{})
@@ -25,7 +30,7 @@ categories = [
 
 category_map =
   Enum.map(categories, fn name ->
-    category = Repo.insert!(%Category{name: name})
+    category = get_or_insert.(Category, %{name: name})
     {name, category}
   end)
   |> Enum.into(%{})
@@ -49,10 +54,11 @@ venue_data = [
 venue_map =
   Enum.map(venue_data, fn {name, city_name} ->
     venue =
-      Repo.insert!(%Venue{
-        name: name,
-        city_id: city_map[city_name].id
-      })
+      Repo.get_by(Venue, name: name) ||
+        Repo.insert!(%Venue{
+          name: name,
+          city_id: city_map[city_name].id
+        })
 
     {name, venue}
   end)
@@ -62,21 +68,27 @@ create_event = fn attrs, category_names ->
   public_id = Cloudinary.extract_public_id(attrs.image)
   categories = Enum.map(category_names, &category_map[&1])
 
-  %Event{}
-  |> Event.changeset(%{
-    title: attrs.title,
-    description: attrs.description,
-    date: attrs.date,
-    time: attrs.time,
-    price: Decimal.new(attrs.price),
-    featured: attrs.featured,
-    image: attrs.image,
-    public_id: public_id,
-    city_id: attrs.city_id,
-    venue_id: attrs.venue_id
-  })
-  |> Ecto.Changeset.put_assoc(:categories, categories)
-  |> Repo.insert!()
+  existing = Repo.get_by(Event, title: attrs.title)
+
+  if existing do
+    existing
+  else
+    %Event{}
+    |> Event.changeset(%{
+      title: attrs.title,
+      description: attrs.description,
+      date: attrs.date,
+      time: attrs.time,
+      price: Decimal.new(attrs.price),
+      featured: attrs.featured,
+      image: attrs.image,
+      public_id: public_id,
+      city_id: attrs.city_id,
+      venue_id: attrs.venue_id
+    })
+    |> Ecto.Changeset.put_assoc(:categories, categories)
+    |> Repo.insert!()
+  end
 end
 
 create_event.(%{
