@@ -6,81 +6,119 @@ defmodule EventExplorerWeb.EventLive.Show do
   def mount(%{"id" => id}, _session, socket) do
     case Events.get_event(id) do
       {:ok, event} ->
-        {:ok, assign(socket, event: event)}
+        related = Events.related_events(event)
 
-      {:error, :not_found} ->
+        {:ok,
+         socket
+         |> assign(:event, event)
+         |> assign(:related, related)}
+
+      _ ->
         {:ok, push_navigate(socket, to: "/events")}
+    end
+  end
+
+  def handle_event("delete", _, socket) do
+    case Events.delete_event(socket.assigns.event) do
+      {:ok, _} ->
+        {:noreply, push_navigate(socket, to: "/events")}
+
+      _ ->
+        {:noreply, socket}
     end
   end
 
   def render(assigns) do
     ~H"""
-    <div class="show-page">
-      <div class="details-header">
-        <.link navigate="/events" class="back-btn">←</.link>
-        <span>Event Details</span>
-      </div>
+    <div id="top" class="bg-black text-white min-h-screen">
 
-      <div class="event-actions">
-        <.link navigate={"/events/#{@event.id}/edit"}>
-          Edit
-        </.link>
+      <section class="flex justify-center items-center pt-32 pb-20 px-4">
+        <div class="bg-[#111] rounded-2xl p-8 w-[420px] md:w-[480px] shadow-2xl border border-[#FF1051]/30">
 
-        <button class="delete-btn" phx-click="delete">
-          Delete
-        </button>
-      </div>
+          <img src={@event.image} class="w-full h-[240px] object-cover rounded-xl mb-4"/>
 
-      <div class="event-card">
-        <img
-          src={@event.image || "/images/placeholder.png"}
-          class="event-image"
-        />
+          <h2 class="text-2xl font-bold mb-3">
+            <%= @event.title %>
+          </h2>
 
-        <div class="event-content">
-          <h1>{@event.title}</h1>
-
-          <p class="event-meta">
-            📍 {@event.venue.name}, {@event.venue.city.name}
-          </p>
-
-          <p class="event-meta">
-            🕒 {@event.date} | {@event.time}
-          </p>
-
-          <div class="event-categories">
-            <%= for category <- @event.categories do %>
-              <span class="category-badge">
-                {category.name}
+          <div class="flex gap-2 flex-wrap mb-3">
+            <%= for cat <- @event.categories do %>
+              <span class="bg-[#FF1051] text-xs px-2 py-1 rounded">
+                <%= cat.name %>
               </span>
             <% end %>
           </div>
 
-          <p class="event-description">
-            Description: {@event.description}
+          <p class="text-sm text-gray-400">
+            Location: <%= @event.venue.name %>, <%= @event.venue.city.name %>
           </p>
 
-          <p class="event-price">
-            💸 {Decimal.to_string(@event.price)}
+          <p class="text-sm text-gray-400">
+            Date: <%= @event.date %>
           </p>
+
+          <p class="text-sm text-gray-400">
+            Time: <%= @event.time %>
+          </p>
+
+          <p class="text-sm text-gray-400 mb-2">
+            Price: $<%= @event.price %>
+          </p>
+
+          <p class="text-sm text-gray-300 mt-3">
+            <%= @event.description %>
+          </p>
+
+          <div class="flex gap-3 mt-6">
+
+            <.link
+              navigate={~p"/events/#{@event.id}/edit"}
+              class="flex-1 text-center bg-gray-700 py-3 rounded hover:bg-gray-600"
+            >
+              Edit
+            </.link>
+
+            <button
+              phx-click="delete"
+              class="flex-1 bg-[#FF1051] py-3 rounded hover:bg-[#e00e47]"
+            >
+              Delete
+            </button>
+
+          </div>
+
         </div>
-      </div>
+      </section>
+
+      <section class="px-6 pb-12">
+        <h3 class="text-xl font-semibold mb-4">Related Events</h3>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <%= for event <- @related do %>
+            <.link navigate={~p"/events/#{event.id}"} class="block">
+              <div class="bg-[#111] rounded-xl p-3 hover:scale-105 transition">
+
+                <img src={event.image} class="h-[120px] w-full object-cover rounded-md"/>
+
+                <h4 class="mt-2 text-sm font-semibold">
+                  <%= event.title %>
+                </h4>
+
+                <p class="text-xs text-gray-400">
+                  <%= event.date %>
+                </p>
+
+                <span class="bg-[#FF1051] text-xs px-2 py-1 rounded mt-1 inline-block">
+                  <%= event.venue.city.name %>
+                </span>
+
+              </div>
+            </.link>
+          <% end %>
+        </div>
+      </section>
+
     </div>
     """
-  end
-
-  def handle_event("delete", _params, socket) do
-    event = socket.assigns.event
-
-    case Events.delete_event(event) do
-      {:ok, _} ->
-        {:noreply,
-         socket
-         |> put_flash(:info, "Event successfully deleted")
-         |> push_navigate(to: "/events")}
-
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Could not delete event")}
-    end
   end
 end

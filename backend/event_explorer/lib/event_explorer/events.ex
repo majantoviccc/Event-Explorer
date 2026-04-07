@@ -91,12 +91,7 @@ defmodule EventExplorer.Events do
     attrs =
       case Map.get(attrs, "image") do
         %Plug.Upload{path: path} ->
-          IO.inspect(path, label: "FILE PATH")
-
-          result = Cloudinary.upload_image(path)
-          IO.inspect(result, label: "UPLOAD RESULT")
-
-          case result do
+          case Cloudinary.upload_image(path) do
             {:ok, %{url: url, public_id: public_id}} ->
               attrs
               |> Map.put("image", url)
@@ -128,12 +123,7 @@ defmodule EventExplorer.Events do
     attrs =
       case Map.get(attrs, "image") do
         %Plug.Upload{path: path} ->
-          IO.inspect(path, label: "FILE PATH")
-
-          result = Cloudinary.upload_image(path)
-          IO.inspect(result, label: "UPLOAD RESULT")
-
-          case result do
+          case Cloudinary.upload_image(path) do
             {:ok, %{url: url, public_id: public_id}} ->
               if event.public_id do
                 Cloudinary.delete_image(event.public_id)
