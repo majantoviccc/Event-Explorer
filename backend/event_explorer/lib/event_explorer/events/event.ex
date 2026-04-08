@@ -40,16 +40,16 @@ defmodule EventExplorer.Events.Event do
       :date,
       :time,
       :price,
-      :image,
       :description,
       :featured,
+      :image,
       :venue_id,
       :public_id
     ])
     |> validate_required([:title, :date, :time, :venue_id])
     |> validate_number(:price, greater_than_or_equal_to: 0)
     |> validate_length(:title, max: 255)
-    |> validate_length(:description, max: 5000)
+    |> validate_length(:description, max: 255)
     |> foreign_key_constraint(:venue_id)
   end
 end

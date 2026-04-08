@@ -1,8 +1,4 @@
 defmodule EventExplorer.Events do
-  @moduledoc """
-  Context module responsible for managing events.
-  """
-
   import Ecto.Query
 
   alias EventExplorer.Repo
@@ -12,7 +8,6 @@ defmodule EventExplorer.Events do
 
   @event_preloads [:categories, venue: :city]
 
-  @spec list_events(map()) :: list()
   def list_events(params \\ %{}) do
     Event
     |> filter_city(params)
@@ -77,7 +72,6 @@ defmodule EventExplorer.Events do
 
   defp filter_featured(query, _), do: query
 
-  @spec get_event(integer()) :: {:ok, map()} | {:error, :not_found}
   def get_event(id) do
     case Repo.get(Event, id) do
       nil -> {:error, :not_found}
@@ -85,74 +79,80 @@ defmodule EventExplorer.Events do
     end
   end
 
-  @spec create_event(map()) ::
-          {:ok, map()} | {:error, Ecto.Changeset.t()}
-  def create_event(attrs) do
-    attrs =
-      case Map.get(attrs, "image") do
-        %Plug.Upload{path: path} ->
-          case Cloudinary.upload_image(path) do
-            {:ok, %{url: url, public_id: public_id}} ->
-              attrs
-              |> Map.put("image", url)
-              |> Map.put("public_id", public_id)
 
-            {:error, _} ->
-              attrs
-          end
+ def create_event(attrs) do
+  IO.inspect(attrs["image"], label: "IMAGE PARAM")
 
-        _ ->
-          attrs
-      end
+  attrs =
+    case Map.get(attrs, "image") do
+      %Plug.Upload{path: path} = upload ->
+        IO.inspect(upload, label: "UPLOAD RECEIVED")
 
-    %Event{}
-    |> Event.changeset(attrs)
-    |> put_categories(attrs)
-    |> Repo.insert()
-    |> case do
-      {:ok, event} -> {:ok, Repo.preload(event, @event_preloads)}
-      {:error, changeset} -> {:error, changeset}
+        case Cloudinary.upload_image(path) do
+          {:ok, %{url: url, public_id: public_id}} ->
+            IO.puts("UPLOAD SUCCESS")
+
+            attrs
+            |> Map.put("image", url)
+            |> Map.put("public_id", public_id)
+
+          {:error, error} ->
+            IO.inspect(error, label: "CLOUDINARY ERROR")
+
+            attrs
+            |> Map.delete("image")
+        end
+
+      other ->
+        IO.inspect(other, label: "NO VALID UPLOAD")
+        attrs
     end
-  end
 
-  @spec update_event(map(), map()) ::
-          {:ok, map()} | {:error, Ecto.Changeset.t()}
+  %Event{}
+  |> Event.changeset(attrs)
+  |> put_categories(attrs)
+  |> Repo.insert()
+end
+
   def update_event(event, attrs) do
-    event = Repo.preload(event, :categories)
+  event = Repo.preload(event, :categories)
 
-    attrs =
-      case Map.get(attrs, "image") do
-        %Plug.Upload{path: path} ->
-          case Cloudinary.upload_image(path) do
-            {:ok, %{url: url, public_id: public_id}} ->
-              if event.public_id do
-                Cloudinary.delete_image(event.public_id)
-              end
+  IO.inspect(attrs["image"], label: "IMAGE PARAM UPDATE")
 
-              attrs
-              |> Map.put("image", url)
-              |> Map.put("public_id", public_id)
+  attrs =
+    case Map.get(attrs, "image") do
+      %Plug.Upload{path: path} = upload ->
+        IO.inspect(upload, label: "UPLOAD RECEIVED")
 
-            {:error, _} ->
-              attrs
-          end
+        case Cloudinary.upload_image(path) do
+          {:ok, %{url: url, public_id: public_id}} ->
+            IO.puts("UPLOAD SUCCESS")
 
-        _ ->
-          attrs
-      end
+            # obriši staru sliku
+            if event.public_id do
+              Cloudinary.delete_image(event.public_id)
+            end
 
-    event
-    |> Event.changeset(attrs)
-    |> put_categories(attrs)
-    |> Repo.update()
-    |> case do
-      {:ok, event} -> {:ok, Repo.preload(event, @event_preloads)}
-      {:error, changeset} -> {:error, changeset}
+            attrs
+            |> Map.put("image", url)
+            |> Map.put("public_id", public_id)
+
+          {:error, error} ->
+            IO.inspect(error, label: "CLOUDINARY ERROR")
+
+            attrs
+            |> Map.delete("image")
+        end
+
+      _ ->
+        attrs
     end
-  end
 
-  @spec delete_event(map()) ::
-          {:ok, map()} | {:error, Ecto.Changeset.t()}
+  event
+  |> Event.changeset(attrs)
+  |> put_categories(attrs)
+  |> Repo.update()
+end
   def delete_event(event) do
     if event.public_id do
       Cloudinary.delete_image(event.public_id)
@@ -162,28 +162,26 @@ defmodule EventExplorer.Events do
   end
 
   defp put_categories(changeset, attrs) do
-    case Map.get(attrs, "category_ids", []) do
-      nil ->
-        changeset
+  category_ids = Map.get(attrs, "category_ids", [])
 
-      category_ids ->
-        category_ids =
-          Enum.map(category_ids, &String.to_integer/1)
+  category_ids =
+    Enum.map(category_ids, fn
+      id when is_binary(id) -> String.to_integer(id)
+      id when is_integer(id) -> id
+    end)
 
-        categories =
-          from(c in Category, where: c.id in ^category_ids)
-          |> Repo.all()
+  categories =
+    from(c in Category, where: c.id in ^category_ids)
+    |> Repo.all()
 
-        Ecto.Changeset.put_assoc(changeset, :categories, categories)
-    end
-  end
+  Ecto.Changeset.put_assoc(changeset, :categories, categories)
+end
 
-  @spec change_event(map(), map()) :: Ecto.Changeset.t()
+
   def change_event(event, attrs \\ %{}) do
     Event.changeset(event, attrs)
   end
 
-  @spec related_events(map()) :: list()
   def related_events(event) do
     event = Repo.preload(event, @event_preloads)
 

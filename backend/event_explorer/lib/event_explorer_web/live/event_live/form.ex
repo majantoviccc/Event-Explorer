@@ -6,76 +6,152 @@ defmodule EventExplorerWeb.EventLive.Form do
   alias EventExplorer.Categories
   alias EventExplorer.Venues
 
-  def mount(_params, _session, socket) do
-    {:ok,
-     socket
-     |> assign(:venues, Venues.list_venues())
-     |> assign(:categories, Categories.list_categories())
-     |> assign(:event, nil)
-     |> assign(:form, nil)
-     |> allow_upload(:image, accept: ~w(.jpg .jpeg .png), max_entries: 1)}
-  end
+  def mount(params, _session, socket) do
+    categories =
+      Categories.list_categories()
+      |> Enum.map(fn c -> {c.name, c.id} end)
 
-  def handle_params(params, _uri, socket) do
-    {:noreply, apply_action(socket, socket.assigns.live_action, params)}
+    venues =
+      Venues.list_venues()
+      |> Enum.map(fn v -> {v.name, v.id} end)
+
+    socket =
+      socket
+      |> assign(:categories, categories)
+      |> assign(:venues, venues)
+      |> apply_action(socket.assigns.live_action, params)
+      |> allow_upload(:image, accept: ~w(.jpg .jpeg .png), max_entries: 1)
+
+    {:ok, socket}
   end
 
   defp apply_action(socket, :new, _params) do
-    event = %Event{}
+    changeset = Events.change_event(%Event{})
 
     socket
-    |> assign(:page_title, "Create Event")
-    |> assign(:event, event)
-    |> assign(:form, to_form(Events.change_event(event)))
+    |> assign(:page_title, "New Event")
+    |> assign(:event, %Event{})
+    |> assign(:form, to_form(changeset))
   end
 
   defp apply_action(socket, :edit, %{"id" => id}) do
-    case Events.get_event(id) do
-      {:ok, event} ->
-        socket
-        |> assign(:page_title, "Edit Event")
-        |> assign(:event, event)
-        |> assign(:form, to_form(Events.change_event(event)))
+    {:ok, event} = Events.get_event(id)
+    changeset = Events.change_event(event)
 
-      _ ->
-        push_navigate(socket, to: "/events")
-    end
+    socket
+    |> assign(:page_title, "Edit Event")
+    |> assign(:event, event)
+    |> assign(:form, to_form(changeset))
   end
 
-  def handle_event("validate", %{"event" => params}, socket) do
-    changeset =
-      socket.assigns.event
-      |> Events.change_event(params)
-      |> Map.put(:action, :validate)
+  def render(assigns) do
+    ~H"""
+    <div class="max-w-xl mx-auto mt-10 text-white">
+      <h2 class="text-2xl mb-6 font-bold"><%= @page_title %></h2>
 
-    {:noreply, assign(socket, :form, to_form(changeset))}
+      <.form for={@form} multipart phx-submit="save" phx-change="validate" class="space-y-4">
+
+        <.input field={@form[:title]} label="Title" class="bg-gray-800 text-white" />
+
+        <.input field={@form[:date]} type="date" label="Date" class="bg-gray-800 text-white" />
+
+        <.input field={@form[:time]} type="time" label="Time" class="bg-gray-800 text-white" />
+
+        <.input field={@form[:price]} type="number" label="Price" class="bg-gray-800 text-white" />
+
+        <.input field={@form[:description]} label="Description" class="bg-gray-800 text-white" />
+
+        <.input
+          field={@form[:venue_id]}
+          type="select"
+          label="Venue"
+          options={@venues}
+          class="bg-gray-800 text-white"
+        />
+
+        <label class="flex items-center gap-2">
+          <input
+            type="checkbox"
+            name="event[featured]"
+            value="true"
+            checked={@form.params["featured"] == "true" || @form.data.featured}
+          />
+          Featured
+        </label>
+
+        <div>
+          <label class="block mb-2">Categories</label>
+
+          <%= for {name, id} <- @categories do %>
+            <label class="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="event[category_ids][]"
+                value={id}
+                checked={
+                  id in (
+                    Map.get(@form.params || %{}, "category_ids", [])
+                    |> Enum.map(fn x -> if is_binary(x), do: String.to_integer(x), else: x end)
+                  )
+                }
+              />
+              <%= name %>
+            </label>
+          <% end %>
+        </div>
+
+        <div>
+          <label class="block mb-2">Image</label>
+          <.live_file_input upload={@uploads.image} />
+        </div>
+
+        <button class="bg-white text-black px-4 py-2 rounded w-full">
+          Save
+        </button>
+
+      </.form>
+    </div>
+    """
   end
 
   def handle_event("save", %{"event" => params}, socket) do
+    IO.inspect(params, label: "RAW PARAMS")
+
     uploaded =
-      consume_uploaded_entries(socket, :image, fn %{path: path}, _ ->
-        {:ok, path}
-      end)
+  consume_uploaded_entries(socket, :image, fn %{path: path}, entry ->
+    dest = Path.join(System.tmp_dir!(), entry.client_name)
+    File.cp!(path, dest)
+    {:ok, dest}
+  end)
+    IO.inspect(uploaded, label: "UPLOADED PATHS")
 
     params =
-      case uploaded do
-        [path] ->
-          Map.put(params, "image", %Plug.Upload{path: path})
+  case uploaded do
+    [path] ->
+      Map.put(params, "image", %Plug.Upload{
+        path: path,
+        filename: Path.basename(path)
+      })
 
-        _ ->
-          case socket.assigns.event do
-            nil -> params
-            event -> Map.put_new(params, "image", event.image)
-          end
-      end
+    _ ->
+      params
+  end
+
+    IO.inspect(params, label: "FINAL PARAMS")
 
     save_event(socket, socket.assigns.live_action, params)
   end
 
   defp save_event(socket, :new, params) do
-    case Events.create_event(params) do
+    result = Events.create_event(params)
+    IO.inspect(result, label: "CREATE RESULT")
+
+    case result do
       {:ok, _event} ->
-        {:noreply, push_navigate(socket, to: "/events")}
+        {:noreply,
+         socket
+         |> put_flash(:info, "Event created!")
+         |> push_navigate(to: "/")}
 
       {:error, changeset} ->
         {:noreply, assign(socket, :form, to_form(changeset))}
@@ -83,103 +159,29 @@ defmodule EventExplorerWeb.EventLive.Form do
   end
 
   defp save_event(socket, :edit, params) do
-    case Events.update_event(socket.assigns.event, params) do
-      {:ok, event} ->
-        {:noreply, push_navigate(socket, to: "/events/#{event.id}")}
+    result = Events.update_event(socket.assigns.event, params)
+    IO.inspect(result, label: "UPDATE RESULT")
+
+    case result do
+      {:ok, _event} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Event updated!")
+         |> push_navigate(to: "/")}
 
       {:error, changeset} ->
         {:noreply, assign(socket, :form, to_form(changeset))}
     end
   end
 
-  def render(assigns) do
-    ~H"""
-    <div class="min-h-screen flex items-center justify-center bg-black px-4 py-10">
+  def handle_event("validate", %{"event" => params}, socket) do
+    IO.inspect(params, label: "VALIDATE PARAMS")
 
-      <.form
-        for={@form}
-        phx-change="validate"
-        phx-submit="save"
-        class="w-full max-w-xl bg-[#111] p-8 rounded-2xl space-y-6 text-white shadow-xl"
-      >
+    changeset =
+      socket.assigns.event
+      |> Events.change_event(params)
+      |> Map.put(:action, :validate)
 
-        <h2 class="text-2xl text-center text-[#FF1051] font-bold">
-          <%= @page_title %>
-        </h2>
-
-        <.input field={@form[:title]} placeholder="Title"
-          class="w-full bg-black border border-gray-700 rounded-lg px-4 py-2"/>
-
-        <.input field={@form[:description]} type="textarea" placeholder="Description"
-          class="w-full bg-black border border-gray-700 rounded-lg px-4 py-2 h-24"/>
-
-        <div class="grid grid-cols-2 gap-4">
-          <.input field={@form[:date]} type="date"
-            class="bg-black border border-gray-700 rounded-lg px-4 py-2"/>
-          <.input field={@form[:time]} type="time"
-            class="bg-black border border-gray-700 rounded-lg px-4 py-2"/>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <.input field={@form[:price]} type="number" step="0.01" placeholder="Price"
-            class="bg-black border border-gray-700 rounded-lg px-4 py-2"/>
-
-          <.input field={@form[:venue_id]} type="select"
-            options={Enum.map(@venues, &{&1.name, &1.id})}
-            prompt="Location"
-            class="bg-black border border-gray-700 rounded-lg px-4 py-2"/>
-        </div>
-
-        <%=
-          event_category_ids =
-            case @event do
-              %{categories: %Ecto.Association.NotLoaded{}} -> []
-              %{categories: categories} -> Enum.map(categories, & &1.id)
-              _ -> []
-            end
-
-          selected_ids =
-            if @form.params["category_ids"] do
-              Enum.map(@form.params["category_ids"], &String.to_integer/1)
-            else
-              event_category_ids
-            end
-        %>
-
-        <div class="flex flex-wrap gap-2">
-          <%= for c <- @categories do %>
-            <label class="flex items-center gap-2 px-3 py-1 rounded-full bg-[#1a1a1a] border border-gray-700 cursor-pointer">
-              <input
-                type="checkbox"
-                name="event[category_ids][]"
-                value={c.id}
-                checked={c.id in selected_ids}
-                class="accent-[#FF1051]"
-              />
-              <span class="text-sm"><%= c.name %></span>
-            </label>
-          <% end %>
-        </div>
-
-        <div>
-          <%= if @event && @event.image do %>
-            <img src={@event.image} class="w-full h-40 object-cover rounded mb-2"/>
-          <% end %>
-
-          <.live_file_input upload={@uploads.image}/>
-
-          <%= for entry <- @uploads.image.entries do %>
-            <.live_img_preview entry={entry} class="w-full h-40 object-cover mt-2 rounded"/>
-          <% end %>
-        </div>
-
-        <button class="w-full bg-[#FF1051] py-3 rounded-lg font-semibold">
-          Save Event
-        </button>
-
-      </.form>
-
-    </div>
-    """
+    {:noreply, assign(socket, :form, to_form(changeset))}
   end
 end

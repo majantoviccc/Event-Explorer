@@ -34,48 +34,56 @@ defmodule EventExplorerWeb.Api.EventController do
   @doc "Creates a new event."
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(conn, params) do
-    event_params = params["event"] || params
+  event_params = params["event"] || params
 
-    IO.inspect(event_params)
+  IO.inspect(event_params)
 
-    case Events.create_event(event_params) do
-      {:ok, event} ->
-        conn
-        |> put_status(:created)
-        |> render(:show, event: event)
+  case Events.create_event(event_params) do
+    {:ok, event} ->
+      event =
+        event
+        |> EventExplorer.Repo.preload([:categories, venue: :city])
 
-      {:error, changeset} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{errors: format_errors(changeset)})
-    end
+      conn
+      |> put_status(:created)
+      |> render(:show, event: event)
+
+    {:error, changeset} ->
+      conn
+      |> put_status(:unprocessable_entity)
+      |> json(%{errors: format_errors(changeset)})
   end
+end
 
   @doc "Updates an existing event."
   @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def update(conn, %{"id" => id} = params) do
-    event_params = params["event"] || params
+  event_params = params["event"] || params
 
-    case Events.get_event(id) do
-      {:error, :not_found} ->
-        conn
-        |> put_status(:not_found)
-        |> json(%{error: "Event not found"})
+  case Events.get_event(id) do
+    {:error, :not_found} ->
+      conn
+      |> put_status(:not_found)
+      |> json(%{error: "Event not found"})
 
-      {:ok, event} ->
-        case Events.update_event(event, event_params) do
-          {:ok, event} ->
-            conn
-            |> put_status(:ok)
-            |> render(:show, event: event)
+    {:ok, event} ->
+      case Events.update_event(event, event_params) do
+        {:ok, event} ->
+          event =
+            event
+            |> EventExplorer.Repo.preload([:categories, venue: :city])
 
-          {:error, changeset} ->
-            conn
-            |> put_status(:unprocessable_entity)
-            |> json(%{errors: format_errors(changeset)})
-        end
-    end
+          conn
+          |> put_status(:ok)
+          |> render(:show, event: event)
+
+        {:error, changeset} ->
+          conn
+          |> put_status(:unprocessable_entity)
+          |> json(%{errors: format_errors(changeset)})
+      end
   end
+end
 
   @doc "Deletes an event."
   @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()

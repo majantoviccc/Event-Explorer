@@ -31,13 +31,17 @@
     </script>
   </head>
   
-  <body class="bg-black text-white min-h-screen flex flex-col">
+ <body class="bg-black text-white min-h-screen flex flex-col">
 
   <header class="bg-black text-white px-6 py-4 flex justify-between items-center border-b border-gray-800 sticky top-0 z-50">
 
-    <h1 class="text-lg font-bold text-[#FF1051]">
-      Event Explorer
-    </h1>
+    <div class="flex items-center gap-3">
+      <img src="/images/logo.jpg" class="w-8 h-8 object-contain" />
+
+      <h1 class="text-lg font-bold text-[#FF1051]">
+        Event Explorer
+      </h1>
+    </div>
 
     <nav class="flex gap-6 text-sm">
       <.link navigate="/" class="hover:text-[#FF1051]">Home</.link>
@@ -52,43 +56,43 @@
 
   <footer class="w-full bg-black text-white border-t border-gray-800 px-6 py-10 text-sm">
 
-  <div class="w-full">
+    <div class="w-full">
 
-    <div class="space-y-4">
+      <div class="space-y-4">
 
-      <details class="border-b border-gray-700 pb-2">
-        <summary class="cursor-pointer flex justify-between">
-          ABOUT US <span>+</span>
-        </summary>
-      </details>
+        <details class="border-b border-gray-700 pb-2">
+          <summary class="cursor-pointer flex justify-between">
+            ABOUT US <span>+</span>
+          </summary>
+        </details>
 
-      <details class="border-b border-gray-700 pb-2">
-        <summary class="cursor-pointer flex justify-between">
-          EVENTS <span>+</span>
-        </summary>
-      </details>
+        <details class="border-b border-gray-700 pb-2">
+          <summary class="cursor-pointer flex justify-between">
+            EVENTS <span>+</span>
+          </summary>
+        </details>
 
-      <details class="border-b border-gray-700 pb-2">
-        <summary class="cursor-pointer flex justify-between">
-          COMPANY <span>+</span>
-        </summary>
-      </details>
+        <details class="border-b border-gray-700 pb-2">
+          <summary class="cursor-pointer flex justify-between">
+            COMPANY <span>+</span>
+          </summary>
+        </details>
+
+      </div>
+
+      <div class="text-center text-gray-500 mt-6 text-xs">
+        © 2026 Event Explorer
+      </div>
+
+      <div class="flex justify-center mt-6">
+        <a href="#top" class="bg-[#FF1051] px-4 py-2 rounded hover:bg-[#e00e47] transition">
+          Back to top ↑
+        </a>
+      </div>
 
     </div>
 
-    <div class="text-center text-gray-500 mt-6 text-xs">
-      © 2026 Event Explorer
-    </div>
-
-    <div class="flex justify-center mt-6">
-      <a href="#top" class="bg-[#FF1051] px-4 py-2 rounded hover:bg-[#e00e47] transition">
-        Back to top ↑
-      </a>
-    </div>
-
-  </div>
-
-</footer>
+  </footer>
 
 </body>
 </html>

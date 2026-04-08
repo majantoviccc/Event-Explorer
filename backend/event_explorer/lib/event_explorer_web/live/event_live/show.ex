@@ -4,6 +4,8 @@ defmodule EventExplorerWeb.EventLive.Show do
   alias EventExplorer.Events
 
   def mount(%{"id" => id}, _session, socket) do
+    id = String.to_integer(id)
+
     case Events.get_event(id) do
       {:ok, event} ->
         related = Events.related_events(event)
@@ -13,29 +15,40 @@ defmodule EventExplorerWeb.EventLive.Show do
          |> assign(:event, event)
          |> assign(:related, related)}
 
-      _ ->
-        {:ok, push_navigate(socket, to: "/events")}
+      {:error, :not_found} ->
+        {:ok,
+         socket
+         |> assign(:event, nil)
+         |> assign(:related, [])}
     end
   end
 
   def handle_event("delete", _, socket) do
-    case Events.delete_event(socket.assigns.event) do
-      {:ok, _} ->
-        {:noreply, push_navigate(socket, to: "/events")}
-
-      _ ->
+    case socket.assigns.event do
+      nil ->
         {:noreply, socket}
+
+      event ->
+        case Events.delete_event(event) do
+          {:ok, _} ->
+            {:noreply, push_navigate(socket, to: "/events")}
+
+          _ ->
+            {:noreply, socket}
+        end
     end
   end
 
   def render(assigns) do
     ~H"""
+    <%= if @event do %>
+
     <div id="top" class="bg-black text-white min-h-screen">
 
       <section class="flex justify-center items-center pt-32 pb-20 px-4">
         <div class="bg-[#111] rounded-2xl p-8 w-[420px] md:w-[480px] shadow-2xl border border-[#FF1051]/30">
 
-          <img src={@event.image} class="w-full h-[240px] object-cover rounded-xl mb-4"/>
+          <img src={@event.image || "/images/placeholder.jpg"} class="w-full h-[240px] object-cover rounded-xl mb-4"/>
 
           <h2 class="text-2xl font-bold mb-3">
             <%= @event.title %>
@@ -98,7 +111,7 @@ defmodule EventExplorerWeb.EventLive.Show do
             <.link navigate={~p"/events/#{event.id}"} class="block">
               <div class="bg-[#111] rounded-xl p-3 hover:scale-105 transition">
 
-                <img src={event.image} class="h-[120px] w-full object-cover rounded-md"/>
+                <img src={event.image || "/images/placeholder.jpg"} class="h-[120px] w-full object-cover rounded-md"/>
 
                 <h4 class="mt-2 text-sm font-semibold">
                   <%= event.title %>
@@ -119,6 +132,35 @@ defmodule EventExplorerWeb.EventLive.Show do
       </section>
 
     </div>
+
+    <% else %>
+
+    <div class="flex items-center justify-center min-h-screen bg-black">
+      <div class="bg-[#2a0d14] border border-[#FF1051] rounded-xl p-8 text-center shadow-2xl">
+
+        <p class="text-[#FF1051] text-lg font-semibold mb-2">
+          Error
+        </p>
+
+        <p class="text-white text-2xl font-bold mb-3">
+          Event not found
+        </p>
+
+        <p class="text-gray-300 text-sm mb-6">
+          This event is not available at the moment or doesn't exist.
+        </p>
+
+        <.link
+          navigate="/events"
+          class="bg-[#FF1051] px-6 py-2 rounded hover:bg-[#e00e47]"
+        >
+          Back to Events
+        </.link>
+
+      </div>
+    </div>
+
+    <% end %>
     """
   end
 end
