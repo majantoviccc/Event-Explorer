@@ -194,7 +194,7 @@ defmodule EventExplorer.Events do
   @doc false
   @spec put_categories(Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
   defp put_categories(changeset, attrs) do
-    category_ids = Map.get(attrs, "category_ids", [])
+   category_ids = Map.get(attrs, "category_ids") || []
 
     category_ids =
       Enum.map(category_ids, fn

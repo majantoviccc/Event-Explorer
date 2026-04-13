@@ -62,7 +62,7 @@ defmodule EventExplorerWeb.EventLive.Form do
           <div>
             <label class="block text-sm text-gray-400 mb-1">Date</label>
             <.input field={@form[:date]} type="date" class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2 focus:border-white focus:outline-none"/>
-              </div>
+            </div>
 
           <div>
             <label class="block text-sm text-gray-400 mb-1">Time</label>
@@ -82,7 +82,9 @@ defmodule EventExplorerWeb.EventLive.Form do
               class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2 focus:border-white focus:outline-none"/>
           </div>
         </div>
+     
 
+    
         <div>
           <label class="block text-sm text-gray-400 mb-1">Description</label>
           <.input field={@form[:description]} class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2 focus:border-white focus:outline-none"/>
