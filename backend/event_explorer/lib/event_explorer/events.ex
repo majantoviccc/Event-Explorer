@@ -194,20 +194,24 @@ defmodule EventExplorer.Events do
   @doc false
   @spec put_categories(Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
   defp put_categories(changeset, attrs) do
-   category_ids = Map.get(attrs, "category_ids") || []
+  case Map.get(attrs, "category_ids") do
+    nil ->
+      changeset
 
-    category_ids =
-      Enum.map(category_ids, fn
-        id when is_binary(id) -> String.to_integer(id)
-        id when is_integer(id) -> id
-      end)
+    category_ids ->
+      category_ids =
+        Enum.map(category_ids, fn
+          id when is_binary(id) -> String.to_integer(id)
+          id when is_integer(id) -> id
+        end)
 
-    categories =
-      from(c in Category, where: c.id in ^category_ids)
-      |> Repo.all()
+      categories =
+        from(c in Category, where: c.id in ^category_ids)
+        |> Repo.all()
 
-    Ecto.Changeset.put_assoc(changeset, :categories, categories)
+      Ecto.Changeset.put_assoc(changeset, :categories, categories)
   end
+end
 
   @doc """
   Returns a changeset for tracking event changes.
