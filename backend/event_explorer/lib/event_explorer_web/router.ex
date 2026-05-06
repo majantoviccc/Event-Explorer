@@ -15,15 +15,15 @@ defmodule EventExplorerWeb.Router do
   end
 
   scope "/", EventExplorerWeb do
-  pipe_through :browser
+    pipe_through :browser
 
-  live "/", HomeLive, :index
+    live "/", HomeLive, :index
 
-  live "/events", EventLive.Index, :index
-  live "/events/new", EventLive.Form, :new
-  live "/events/:id", EventLive.Show, :show
-  live "/events/:id/edit", EventLive.Form, :edit
-end
+    live "/events", EventLive.Index, :index
+    live "/events/new", EventLive.Form, :new
+    live "/events/:id", EventLive.Show, :show
+    live "/events/:id/edit", EventLive.Form, :edit
+  end
 
   scope "/api", EventExplorerWeb.Api do
     pipe_through :api

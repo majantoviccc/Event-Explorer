@@ -832,21 +832,21 @@ defmodule EventExplorer.EventsTest do
   end
 
   test "update_event returns error with invalid data" do
-
     {:ok, city} = Repo.insert(%City{name: "Podgorica"})
     {:ok, venue} = Repo.insert(%Venue{name: "V1", city_id: city.id})
-  {:ok, event} =
-    Events.create_event(%{
-      "title" => "Valid title",
-      "date" => ~D[2026-01-01],
-       "time" => ~T[20:00:00],
-      "city_id" => city.id,
-      "venue_id" => venue.id
-    })
 
-  assert {:error, %Ecto.Changeset{}} =
-           Events.update_event(event, %{
-             "title" => nil
-           })
-end
+    {:ok, event} =
+      Events.create_event(%{
+        "title" => "Valid title",
+        "date" => ~D[2026-01-01],
+        "time" => ~T[20:00:00],
+        "city_id" => city.id,
+        "venue_id" => venue.id
+      })
+
+    assert {:error, %Ecto.Changeset{}} =
+             Events.update_event(event, %{
+               "title" => nil
+             })
+  end
 end

@@ -14,7 +14,6 @@ defmodule EventExplorer.MixProject do
       listeners: [Phoenix.CodeReloader],
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
-
         coveralls: :test,
         "coveralls.detail": :test,
         "coveralls.post": :test,
@@ -36,8 +35,7 @@ defmodule EventExplorer.MixProject do
 
   def cli do
     [
-      preferred_envs: [precommit: :test
-    ]
+      preferred_envs: [precommit: :test]
     ]
   end
 
